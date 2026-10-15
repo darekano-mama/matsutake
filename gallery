@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>写真ギャラリー</title>
+  <style>
+    :root { --primary: #2C3E50; --accent: #3498DB; --bg: #F5F7FA; --text: #333; --border: #BDC3C7; --error: #E74C3C; }
+    body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin:0; }
+    .card { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 500px; margin: 40px auto; text-align: center; }
+    
+    input[type="number"] { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 1.2rem; margin-bottom: 15px; text-align: center; letter-spacing: 5px; }
+    .btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+    .btn:disabled { background: #95A5A6; cursor: not-allowed; }
+    .btn-sm { font-weight:bold; cursor:pointer; }
+    
+    #galleryView { display: none; max-width: 1000px; margin: 0 auto; }
+    .gallery-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+    @media (min-width: 600px) { .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; } }
+    
+    .gallery-item-wrapper { aspect-ratio: 1 / 1; background: #E2E8F0; border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; }
+    .gallery-item { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.4s ease; }
+    .gallery-item:active { transform: scale(0.95); }
+
+    #previewModal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
+    #previewImg { max-width: 100vw; max-height: 80vh; object-fit: contain; transition: opacity 0.2s; }
+    .preview-header { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; color: white; background: linear-gradient(rgba(0,0,0,0.6), transparent); }
+    .preview-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); }
+    .btn-icon { background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; }
+    .btn-dl { background: #3498DB; color: white; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    .btn-dl:disabled { background: #95A5A6; }
+    .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 2rem; background: rgba(0,0,0,0.3); padding: 10px 15px; cursor: pointer; border-radius: 8px; user-select: none; }
+    .nav-left { left: 10px; }
+    .nav-right { right: 10px; }
+    @media (max-width: 768px) { .nav-arrow { display: none; } }
+
+    #longPressGuide { display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: #F1C40F; color: #333; font-weight: bold; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10000; animation: popup 0.5s ease; }
+    @keyframes popup { 0% { top: 50px; opacity: 0; } 100% { top: 70px; opacity: 1; } }
+    .notice-banner { display: none; background: #FFF3CD; color: #856404; padding: 12px 15px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px; border: 1px solid #FFEEBA; }
+  </style>
+</head>
+<body>
+
+  <div id="loading" style="text-align:center; padding:50px;">情報を読み込んでいます...</div>
+
+  <div id="authView" class="card" style="display:none;">
+    <h2>写真ギャラリー</h2>
+    <p style="font-size:0.9rem; color:#666;">LINEでお送りした4桁のパスコードを入力してください。</p>
+    <input type="number" id="passcodeInput" placeholder="----" maxlength="4" pattern="\d*">
+    <div id="authError" style="color:var(--error); font-size:0.85rem; margin-bottom:15px;"></div>
+    <button class="btn" id="btnAuth" onclick="verifyPasscode()">アルバムを開く</button>
+  </div>
+
+  <div id="galleryView">
+    <div id="customerGreeting" style="font-size: 1.15rem; font-weight: bold; color: var(--primary); margin-bottom: 10px;"></div>
+    <div class="gallery-header">
+      <h2 style="margin:0;">アルバム</h2>
+      <div style="display:flex; gap:15px; align-items:center;">
+        <div id="photoCount" style="font-size:0.9rem; color:#666; font-weight:bold;"></div>
+        <button id="btnZipDl" class="btn-sm" style="background:#2ECC71; color:#fff; border:none; padding:8px 12px; border-radius:4px;" onclick="downloadZip()">📦 一括保存</button>
+      </div>
+    </div>
+    <div id="expirationNotice" class="notice-banner"></div>
+    <div id="galleryList" class="gallery-grid"></div>
+    <div style="text-align:center; margin-top:30px;">
+      <p style="font-size:0.85rem; color:#95A5A6;">※保存忘れのないようお気をつけください。</p>
+    </div>
+  </div>
+
+  <div id="previewModal">
+    <div class="preview-header">
+      <div id="previewCount" style="font-weight:bold; font-size:1.1rem; text-shadow:1px 1px 2px #000;"></div>
+      <div class="btn-icon" onclick="closePreview()">✕</div>
+    </div>
+    <div id="longPressGuide">👇 この画像を長押しして<br>「写真に追加」を選んでください</div>
+    <div class="nav-arrow nav-left" onclick="prevImage()">❮</div>
+    <img id="previewImg" src="">
+    <div class="nav-arrow nav-right" onclick="nextImage()">❯</div>
+    <div class="preview-footer">
+      <button id="btnDownload" class="btn-dl" onclick="downloadCurrentPhoto()">📥 カメラロールに保存</button>
+    </div>
+  </div>
+
+  <script>
+    // ★ ここをご自身のGAS WebアプリURLに変更してください
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyn-PtGsFleWYmvFTufvbQ1ayg456sJ9hYEHB5ohbtCBCXUZALuJkNIaHgub8jk0nLa/exec';
+    
+    let urlToken = '';
+    let sessionToken = '';
+    let galleryImages = []; 
+    let currentIndex = 0;
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let intersectionObserver = null;
+
+    // 非同期でGASのAPIを叩く共通関数
+    async function callGasApi(action, data = {}) {
+      try {
+        const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: action, data: data }) });
+        return await res.json();
+      } catch (err) { return { success: false, error: { message: err.message } }; }
+    }
+
+    window.onload = function() {
+      // GASのテンプレート機能(<?= ?>)をやめ、URLパラメータから直接取得する
+      const urlParams = new URLSearchParams(window.location.search);
+      urlToken = urlParams.get('t');
+      
+      if (!urlToken) {
+        document.getElementById('loading').innerText = '無効なURLです。LINEのリンクから再度お試しください。';
+        return;
+      }
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('authView').style.display = 'block';
+    };
+
+    async function verifyPasscode() {
+      var code = document.getElementById('passcodeInput').value;
+      if (!code) return;
+      
+      document.getElementById('btnAuth').disabled = true;
+      document.getElementById('btnAuth').innerText = '確認中...';
+      document.getElementById('authError').innerText = '';
+
+      // API経由で認証
+      const res = await callGasApi('verifyGalleryAccess', { token: urlToken, passcode: code });
+      
+      if (res.success) {
+        document.getElementById('authView').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('loading').innerText = '写真を準備しています...';
+        
+        sessionToken = typeof res.data === 'string' ? res.data : (res.data.session_token || res.data.sessionToken || res.data.token || res.data);
+        
+        if (typeof res.data === 'object' && res.data.customer_name) {
+          document.getElementById('customerGreeting').innerText = res.data.customer_name + ' 様';
+          if (res.data.expire_at) {
+            let d = new Date(res.data.expire_at);
+            if (!isNaN(d.getTime())) {
+              let dateStr = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+              let noticeEl = document.getElementById('expirationNotice');
+              noticeEl.innerHTML = '💡 <strong>写真の保存期限は ' + dateStr + ' です</strong><br>期限を過ぎると自動で削除されてしまいますので、お早めに「一括保存」または各写真の保存をお願いいたします。';
+              noticeEl.style.display = 'block';
+            }
+          }
+        }
+        loadPhotos();
+      } else {
+        document.getElementById('authError').innerText = res.error ? res.error.message : '認証に失敗しました。';
+        document.getElementById('btnAuth').disabled = false;
+        document.getElementById('btnAuth').innerText = 'アルバムを開く';
+      }
+    }
+
+    async function loadPhotos() {
+      const res = await callGasApi('getPhotoList', { session_token: sessionToken });
+      document.getElementById('loading').style.display = 'none';
+      
+      if (res.success) {
+        galleryImages = res.data;
+        setupGalleryObserver(); 
+        renderGallery();
+        document.getElementById('galleryView').style.display = 'block';
+      } else {
+        alert('写真の取得に失敗しました: ' + res.error.message);
+      }
+    }
+
+    function setupGalleryObserver() {
+      intersectionObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            let imgEl = entry.target;
+            let index = imgEl.getAttribute('data-index');
+            loadThumbnailAsync(index, imgEl);
+            observer.unobserve(imgEl);
+          }
+        });
+      }, { rootMargin: "200px" }); 
+    }
+
+    function renderGallery() {
+      document.getElementById('photoCount').innerText = galleryImages.length + '枚';
+      let html = '';
+      for(let i = 0; i < galleryImages.length; i++) {
+        html += '<div class="gallery-item-wrapper" onclick="openPreview(' + i + ')">' +
+                '<img id="thumb_' + i + '" class="gallery-item" data-index="' + i + '" />' +
+                '</div>';
+      }
+      document.getElementById('galleryList').innerHTML = html;
+      for(let i = 0; i < galleryImages.length; i++) {
+        intersectionObserver.observe(document.getElementById('thumb_' + i));
+      }
+    }
+
+    async function loadThumbnailAsync(index, imgEl) {
+      let imgObj = galleryImages[index];
+      let imgId = imgObj.id || imgObj.fileId || imgObj.file_id;
+      
+      const res = await callGasApi('getPhotoThumbnailUrl', { session_token: sessionToken, file_id: imgId, size: 'w200' });
+      if (res.success && res.data && res.data.data_url) {
+        imgEl.src = res.data.data_url;
+        imgEl.style.opacity = '1';
+      }
+    }
+
+    function openPreview(index) {
+      currentIndex = index;
+      document.getElementById('longPressGuide').style.display = 'none';
+      updatePreviewDisplay();
+      document.getElementById('previewModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePreview() {
+      document.getElementById('previewModal').style.display = 'none';
+      document.getElementById('previewImg').src = '';
+      document.body.style.overflow = 'auto';
+    }
+
+    async function updatePreviewDisplay() {
+      if (galleryImages.length === 0) return;
+      let imgObj = galleryImages[currentIndex];
+      let imgId = imgObj.id || imgObj.fileId || imgObj.file_id;
+      
+      let imgEl = document.getElementById('previewImg');
+      imgEl.style.opacity = '0.3'; 
+      document.getElementById('previewCount').innerText = (currentIndex + 1) + ' / ' + galleryImages.length;
+      document.getElementById('btnDownload').style.display = 'block';
+      document.getElementById('longPressGuide').style.display = 'none';
+      
+      const res = await callGasApi('getPhotoThumbnailUrl', { session_token: sessionToken, file_id: imgId, size: 'w800' });
+      if (res.success && res.data && res.data.data_url) {
+        imgEl.src = res.data.data_url;
+        imgEl.style.opacity = '1';
+      }
+    }
+
+    function nextImage() { if (currentIndex < galleryImages.length - 1) { currentIndex++; updatePreviewDisplay(); } }
+    function prevImage() { if (currentIndex > 0) { currentIndex--; updatePreviewDisplay(); } }
+
+    async function downloadCurrentPhoto() {
+      const btn = document.getElementById('btnDownload');
+      btn.innerText = '⏳ 最高画質を準備中...';
+      btn.disabled = true;
+
+      let imgObj = galleryImages[currentIndex];
+      let imgId = imgObj.id || imgObj.fileId || imgObj.file_id;
+      
+      const res = await callGasApi('getPhotoDownloadUrl', { session_token: sessionToken, file_id: imgId });
+      btn.innerText = '📥 カメラロールに保存';
+      btn.disabled = false;
+      
+      if (res.success && res.data && res.data.download_url) {
+        if (navigator.share && navigator.canShare) {
+          fetch(res.data.download_url)
+            .then(r => r.blob())
+            .then(blob => {
+              const file = new File([blob], res.data.filename || 'photo.jpg', { type: blob.type });
+              navigator.share({ files: [file] }).catch(err => {
+                showLongPressUI(res.data.download_url);
+              });
+            });
+        } else {
+          showLongPressUI(res.data.download_url);
+        }
+      } else {
+        alert('取得エラー: ' + res.error.message);
+      }
+    }
+
+    function showLongPressUI(highResDataUrl) {
+      document.getElementById('previewImg').src = highResDataUrl;
+      document.getElementById('btnDownload').style.display = 'none';
+      document.getElementById('longPressGuide').style.display = 'block';
+    }
+
+    async function downloadZip() {
+      const btn = document.getElementById('btnZipDl');
+      btn.innerText = '⏳ 作成中...';
+      btn.disabled = true;
+      
+      const res = await callGasApi('getZipDownloadUrl', { session_token: sessionToken });
+      btn.innerText = '📦 一括保存';
+      btn.disabled = false;
+      
+      if (res.success && res.data && res.data.download_url) {
+        const a = document.createElement('a');
+        a.href = res.data.download_url;
+        a.download = res.data.filename || 'photos.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        alert('ZIP作成エラー: ' + res.error.message);
+      }
+    }
+
+    const previewModal = document.getElementById('previewModal');
+    previewModal.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    previewModal.addEventListener('touchend', function(e) {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 50) nextImage();
+      if (touchEndX > touchStartX + 50) prevImage();
+    }, {passive: true});
+  </script>
+</body>
+</html>
