@@ -310,7 +310,7 @@
     function generateChildFields(presetChildren = null) {
       const count = parseInt(document.getElementById('appChildCount').value, 10);
       let html = '';
-      const ages = ["3ヶ月未満", "6ヶ月未満", "9ヶ月未満", "1歳未満", "1歳6ヶ月未満", "2歳未満", "2歳", "3歳"];
+      const ages = ["生後0〜2ヶ月", "生後3〜5ヶ月", "生後6〜8ヶ月", "生後9〜11ヶ月", "1歳〜1歳5ヶ月", "1歳6ヶ月〜1歳11ヶ月", "2歳", "3歳"];
       
       for (let i = 1; i <= count; i++) {
         let preName = (presetChildren && presetChildren[i-1]) ? presetChildren[i-1].name : '';
