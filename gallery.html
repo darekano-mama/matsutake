@@ -73,12 +73,12 @@
       <div id="previewCount" style="font-weight:bold; font-size:1.1rem; text-shadow:1px 1px 2px #000;"></div>
       <div class="btn-icon" onclick="closePreview()">✕</div>
     </div>
-    <div id="longPressGuide">👇 この画像を長押しして<br>「写真に追加」を選んでください</div>
+    <div id="longPressGuide">この画像を長押しして<br>「写真に追加」を選んでください</div>
     <div class="nav-arrow nav-left" onclick="prevImage()">❮</div>
     <img id="previewImg" src="">
     <div class="nav-arrow nav-right" onclick="nextImage()">❯</div>
     <div class="preview-footer">
-      <button id="btnDownload" class="btn-dl" onclick="downloadCurrentPhoto()">📥 カメラロールに保存</button>
+      <button id="btnDownload" class="btn-dl" onclick="downloadCurrentPhoto()"> カメラロールに保存</button>
     </div>
   </div>
 
@@ -140,7 +140,7 @@
             if (!isNaN(d.getTime())) {
               let dateStr = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
               let noticeEl = document.getElementById('expirationNotice');
-              noticeEl.innerHTML = '💡 <strong>写真の保存期限は ' + dateStr + ' です</strong><br>期限を過ぎると自動で削除されてしまいますので、お早めに「一括保存」または各写真の保存をお願いいたします。';
+              noticeEl.innerHTML = '<strong>写真の保存期限は ' + dateStr + ' です</strong><br>期限を過ぎると自動で削除されてしまいますので、お早めに「一括保存」または各写真の保存をお願いいたします。';
               noticeEl.style.display = 'block';
             }
           }
@@ -242,14 +242,14 @@
 
     async function downloadCurrentPhoto() {
       const btn = document.getElementById('btnDownload');
-      btn.innerText = '⏳ 最高画質を準備中...';
+      btn.innerText = '最高画質を準備中...';
       btn.disabled = true;
 
       let imgObj = galleryImages[currentIndex];
       let imgId = imgObj.id || imgObj.fileId || imgObj.file_id;
       
       const res = await callGasApi('getPhotoDownloadUrl', { session_token: sessionToken, file_id: imgId });
-      btn.innerText = '📥 カメラロールに保存';
+      btn.innerText = 'カメラロールに保存';
       btn.disabled = false;
       
       if (res.success && res.data && res.data.download_url) {
@@ -278,11 +278,11 @@
 
     async function downloadZip() {
       const btn = document.getElementById('btnZipDl');
-      btn.innerText = '⏳ 作成中...';
+      btn.innerText = '作成中...';
       btn.disabled = true;
       
       const res = await callGasApi('getZipDownloadUrl', { session_token: sessionToken });
-      btn.innerText = '📦 一括保存';
+      btn.innerText = '一括保存';
       btn.disabled = false;
       
       if (res.success && res.data && res.data.download_url) {
