@@ -326,9 +326,20 @@
 
     function calculatePrice() {
       const count = parseInt(document.getElementById('appChildCount').value, 10);
-      const unit = currentEvent.unit_price || 0;
-      const total = currentEvent.price_type === 'PER_CHILD' ? unit * count : unit;
-      document.getElementById('previewPrice').innerText = `予定料金: ${total.toLocaleString()} 円`;
+      const base = parseInt(currentEvent.base_price, 10) || 0;
+      const transport = parseInt(currentEvent.transport_fee, 10) || 0;
+      const facility = parseInt(currentEvent.facility_fee, 10) || 0;
+      
+      const quantity = (currentEvent.price_type === 'PER_CHILD') ? count : 1;
+      const total = (base * quantity) + transport + facility;
+      
+      let breakdown = `(基本料金: ${base.toLocaleString()}円`;
+      if(currentEvent.price_type === 'PER_CHILD') breakdown += ` × ${count}人`;
+      if (transport > 0) breakdown += ` ＋ 交通費: ${transport.toLocaleString()}円`;
+      if (facility > 0) breakdown += ` ＋ 施設利用料: ${facility.toLocaleString()}円`;
+      breakdown += `)`;
+      
+      document.getElementById('previewPrice').innerHTML = `予定料金: ${total.toLocaleString()} 円<br><span style="font-size:0.9rem; color:#666; font-weight:normal;">${breakdown}</span>`;
       return total;
     }
 
@@ -346,7 +357,20 @@
       
       let html = `<strong>保護者:</strong> ${name}<br><strong>子供人数:</strong> ${count}人<br>`;
       children.forEach((c) => { html += `・${c.name} (${c.age})<br>`; });
-      html += `<br><strong>確定料金:</strong> ${calculatePrice().toLocaleString()}円`;
+      
+      const base = parseInt(currentEvent.base_price, 10) || 0;
+      const transport = parseInt(currentEvent.transport_fee, 10) || 0;
+      const facility = parseInt(currentEvent.facility_fee, 10) || 0;
+      // calculatePrice() が既に画面の previewPrice を更新するため、ここで変数を取得しておきます
+      // ※注意: index.html 側の calculatePrice() も新しいロジックに置き換わっている前提です
+      const total = calculatePrice();
+      
+      html += `<br><strong>確定料金: ${total.toLocaleString()}円</strong><br>`;
+      html += `<span style="font-size:0.85rem; color:#666;">内訳: 基本料金 ${base.toLocaleString()}円`;
+      if(currentEvent.price_type === 'PER_CHILD') html += ` × ${count}人`;
+      if(transport > 0) html += ` ＋ 交通費 ${transport.toLocaleString()}円`;
+      if(facility > 0) html += ` ＋ 施設利用料 ${facility.toLocaleString()}円`;
+      html += `</span>`;
       
       document.getElementById('confirmHtml').innerHTML = html;
       document.getElementById('modal').style.display = 'flex';
