@@ -56,6 +56,24 @@
       border-top: 5px solid #fff; border-radius: 50%;
       animation: spin 1s linear infinite;
     }
+    /* アンケートUI用CSS */
+    .survey-q { font-weight: bold; font-size: 0.95rem; margin-top: 25px; margin-bottom: 10px; color: var(--primary); }
+    .survey-hint { font-size: 0.8rem; color: #95A5A6; font-weight: normal; margin-left: 5px; }
+    
+    .rating-group { display: flex; gap: 5px; justify-content: space-between; }
+    .rating-label { flex: 1; text-align: center; position: relative; }
+    .rating-label input[type="radio"] { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+    .rating-box { display: block; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px 0; font-size: 1rem; font-weight: bold; color: #7F8C8D; transition: all 0.2s; cursor: pointer; }
+    .rating-label input[type="radio"]:checked ~ .rating-box { background: #EAF2F8; border-color: var(--accent); color: var(--accent); }
+    .rating-desc { display: flex; justify-content: space-between; font-size: 0.75rem; color: #95A5A6; margin-top: 4px; padding: 0 5px; }
+    
+    .sns-group { display: flex; flex-direction: column; gap: 8px; }
+    .sns-label { display: flex; align-items: center; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px; font-size: 0.95rem; font-weight: bold; color: #333; cursor: pointer; transition: 0.2s; }
+    .sns-label input[type="radio"] { margin-right: 10px; transform: scale(1.3); accent-color: var(--accent); }
+    .sns-label:has(input[type="radio"]:checked) { background: #EAF2F8; border-color: var(--accent); }
+    
+    .survey-textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: inherit; resize: vertical; min-height: 80px; -webkit-appearance: none; }
+    #surveyThanks { display: none; background: #EAF2F8; border: 2px solid var(--accent); color: var(--accent); padding: 20px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 40px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
@@ -82,6 +100,72 @@
     </div>
     <div id="expirationNotice" class="notice-banner"></div>
     <div id="galleryList" class="gallery-grid"></div>
+    <!-- ★アンケートフォーム -->
+    <div id="surveyContainer" class="card" style="display:none; margin-top: 40px; border: 2px solid var(--accent);">
+      <h3 style="margin-top:0; border-bottom:2px solid var(--border); padding-bottom:10px; color:var(--primary);">📝 撮影アンケートのお願い</h3>
+      <p style="font-size:0.9rem; color:#666; line-height:1.5;">今後のサービス向上のため、ぜひご感想をお聞かせください！（所要時間: 1分）</p>
+      
+      <form id="surveyForm">
+        <div class="survey-q">1. 今回の撮影はたのしかったですか？ <span style="color:red">*</span></div>
+        <div class="rating-group">
+          <label class="rating-label"><input type="radio" name="q1_fun" value="1"><span class="rating-box">1</span></label>
+          <label class="rating-label"><input type="radio" name="q1_fun" value="2"><span class="rating-box">2</span></label>
+          <label class="rating-label"><input type="radio" name="q1_fun" value="3"><span class="rating-box">3</span></label>
+          <label class="rating-label"><input type="radio" name="q1_fun" value="4"><span class="rating-box">4</span></label>
+          <label class="rating-label"><input type="radio" name="q1_fun" value="5"><span class="rating-box">5</span></label>
+        </div>
+        <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
+
+        <div class="survey-q">2. 所要時間は適切な長さでしたか？ <span style="color:red">*</span></div>
+        <div class="rating-group">
+          <label class="rating-label"><input type="radio" name="q2_time" value="1"><span class="rating-box">1</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="2"><span class="rating-box">2</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="3"><span class="rating-box">3</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="4"><span class="rating-box">4</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="5"><span class="rating-box">5</span></label>
+        </div>
+        <!-- ★変更: 時間の感じ方に合わせたラベル -->
+        <div class="rating-desc"><span>短すぎた</span><span>適切</span><span>長すぎた</span></div>
+
+        <div class="survey-q">3. 写真の仕上がりは満足ですか？ <span style="color:red">*</span></div>
+        <div class="rating-group">
+          <label class="rating-label"><input type="radio" name="q3_quality" value="1"><span class="rating-box">1</span></label>
+          <label class="rating-label"><input type="radio" name="q3_quality" value="2"><span class="rating-box">2</span></label>
+          <label class="rating-label"><input type="radio" name="q3_quality" value="3"><span class="rating-box">3</span></label>
+          <label class="rating-label"><input type="radio" name="q3_quality" value="4"><span class="rating-box">4</span></label>
+          <label class="rating-label"><input type="radio" name="q3_quality" value="5"><span class="rating-box">5</span></label>
+        </div>
+        <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
+
+        <div class="survey-q">4. 特に気に入った写真があれば教えてください <span class="survey-hint">任意</span></div>
+        <textarea id="q4_favorite_photo" class="survey-textarea" placeholder="例: 笑顔のアップの写真、シャボン玉のシーン など"></textarea>
+
+        <div class="survey-q">5. 撮影について良かった点があれば教えてください <span class="survey-hint">任意</span></div>
+        <textarea id="q5_good_point" class="survey-textarea" placeholder="例: 子供をうまく笑わせてくれた、リラックスできた 等"></textarea>
+
+        <div class="survey-q">6. もっとこうしてほしかった、という点はありますか？ <span class="survey-hint">任意</span></div>
+        <textarea id="q6_improvement" class="survey-textarea" placeholder="気になったことやご要望があればお書きください"></textarea>
+
+        <div class="survey-q">7. 撮影した写真をSNSやポートフォリオに掲載してもよいですか？ <span style="color:red">*</span></div>
+        <div class="sns-group">
+          <label class="sns-label"><input type="radio" name="q7_sns" value="掲載可" onchange="toggleConditionInput()"> 掲載可</label>
+          <label class="sns-label"><input type="radio" name="q7_sns" value="条件付き掲載可" id="sns_conditional" onchange="toggleConditionInput()"> 条件付き掲載可 (子供の顔出しNGなど)</label>
+          <label class="sns-label"><input type="radio" name="q7_sns" value="掲載不可" onchange="toggleConditionInput()"> 掲載不可</label>
+        </div>
+        
+        <!-- ★追加: 条件付きを選んだ場合のみ表示される入力欄 -->
+        <div id="conditionInputWrapper" style="display:none; margin-top: 10px;">
+          <textarea id="q7_condition_text" class="survey-textarea" placeholder="掲載条件をご記入ください（例：子供の顔はスタンプで隠してほしい、横顔ならOK 等）"></textarea>
+        </div>
+        
+        <button type="button" class="btn" id="btnSubmitSurvey" style="margin-top: 25px;" onclick="submitSurvey()">アンケートを送信する</button>
+      </form>
+    </div>
+    
+    <!-- 送信完了メッセージ -->
+    <div id="surveyThanks">
+      ご協力いただきありがとうございました！<br>いただいたご意見は今後の励みとさせていただきます✨
+    </div>
     <div style="text-align:center; margin-top:30px;">
       <p style="font-size:0.85rem; color:#95A5A6;">※保存忘れのないようお気をつけください。</p>
     </div>
@@ -171,6 +255,9 @@
             }
           }
         }
+        if (res.data.has_answered_survey === false) {
+          document.getElementById('surveyContainer').style.display = 'block';
+        }
         loadPhotos();
       } else {
         document.getElementById('authError').innerText = res.error ? res.error.message : '認証に失敗しました。';
@@ -217,6 +304,100 @@
       document.getElementById('galleryList').innerHTML = html;
       for(let i = 0; i < galleryImages.length; i++) {
         intersectionObserver.observe(document.getElementById('thumb_' + i));
+      }
+    }
+
+    async function submitSurvey() {
+      // ラジオボタンの選択値を取得
+      const q1 = document.querySelector('input[name="q1_fun"]:checked');
+      const q2 = document.querySelector('input[name="q2_time"]:checked');
+      const q3 = document.querySelector('input[name="q3_quality"]:checked');
+      const q7 = document.querySelector('input[name="q7_sns"]:checked');
+      
+      // 必須チェック
+      if (!q1 || !q2 || !q3 || !q7) {
+        alert('5段階評価とSNS掲載の許可については、すべてご回答をお願いいたします。');
+        return;
+      }
+      
+      const payload = {
+        q1_fun: q1.value,
+        q2_time: q2.value,
+        q3_quality: q3.value,
+        q4_favorite_photo: document.getElementById('q4_favorite_photo').value,
+        q5_good_point: document.getElementById('q5_good_point').value,
+        q6_improvement: document.getElementById('q6_improvement').value,
+        q7_sns_permission: q7.value
+      };
+      
+      const btn = document.getElementById('btnSubmitSurvey');
+      btn.innerText = '送信中...';
+      btn.disabled = true;
+      
+      const res = await callGasApi('submitSurvey', { session_token: sessionToken, payload: payload });
+      
+      if (res.success) {
+        document.getElementById('surveyContainer').style.display = 'none';
+        document.getElementById('surveyThanks').style.display = 'block';
+      } else {
+        alert('送信エラー: ' + res.error.message);
+        btn.innerText = 'アンケートを送信する';
+        btn.disabled = false;
+      }
+    }
+
+    // ★追加: 条件付き掲載を選んだ時にテキストボックスを表示・非表示にする関数
+    function toggleConditionInput() {
+      const isConditional = document.getElementById('sns_conditional').checked;
+      document.getElementById('conditionInputWrapper').style.display = isConditional ? 'block' : 'none';
+    }
+
+    // ★追加: アンケート送信関数（条件分岐のバリデーションを追加）
+    async function submitSurvey() {
+      const q1 = document.querySelector('input[name="q1_fun"]:checked');
+      const q2 = document.querySelector('input[name="q2_time"]:checked');
+      const q3 = document.querySelector('input[name="q3_quality"]:checked');
+      const q7 = document.querySelector('input[name="q7_sns"]:checked');
+      
+      if (!q1 || !q2 || !q3 || !q7) {
+        alert('5段階評価とSNS掲載の許可については、すべてご回答をお願いいたします。');
+        return;
+      }
+      
+      // ★条件付き掲載可を選んだ場合、テキスト入力が必須
+      let snsPermissionText = q7.value;
+      if (snsPermissionText === '条件付き掲載可') {
+        const conditionText = document.getElementById('q7_condition_text').value.trim();
+        if (!conditionText) {
+          alert('「条件付き掲載可」を選択された場合は、掲載条件をご記入ください。');
+          return;
+        }
+        snsPermissionText = '条件付き可: ' + conditionText;
+      }
+      
+      const payload = {
+        q1_fun: q1.value,
+        q2_time: q2.value,
+        q3_quality: q3.value,
+        q4_favorite_photo: document.getElementById('q4_favorite_photo').value,
+        q5_good_point: document.getElementById('q5_good_point').value,
+        q6_improvement: document.getElementById('q6_improvement').value,
+        q7_sns_permission: snsPermissionText // まとめたテキストをDBに保存
+      };
+      
+      const btn = document.getElementById('btnSubmitSurvey');
+      btn.innerText = '送信中...';
+      btn.disabled = true;
+      
+      const res = await callGasApi('submitSurvey', { session_token: sessionToken, payload: payload });
+      
+      if (res.success) {
+        document.getElementById('surveyContainer').style.display = 'none';
+        document.getElementById('surveyThanks').style.display = 'block';
+      } else {
+        alert('送信エラー: ' + res.error.message);
+        btn.innerText = 'アンケートを送信する';
+        btn.disabled = false;
       }
     }
 
