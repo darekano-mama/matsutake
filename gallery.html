@@ -4,15 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>写真ギャラリー</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <style>
     :root { --primary: #2C3E50; --accent: #3498DB; --bg: #F5F7FA; --text: #333; --border: #BDC3C7; --error: #E74C3C; }
     body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin:0; }
     .card { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 500px; margin: 40px auto; text-align: center; }
     
+    .material-symbols-outlined { font-size: 1.2rem; vertical-align: middle; }
+    .icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
+    
     input[type="number"] { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 1.2rem; margin-bottom: 15px; text-align: center; letter-spacing: 5px; }
     .btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
     .btn:disabled { background: #95A5A6; cursor: not-allowed; }
-    .btn-sm { font-weight:bold; cursor:pointer; }
+    .btn-sm { font-weight:bold; cursor:pointer; padding: 8px 12px; }
     
     #galleryView { display: none; max-width: 1000px; margin: 0 auto; }
     .gallery-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
@@ -27,15 +31,14 @@
     #previewImg { max-width: 100vw; max-height: 80vh; object-fit: contain; transition: opacity 0.2s; }
     .preview-header { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; color: white; background: linear-gradient(rgba(0,0,0,0.6), transparent); }
     .preview-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); }
-    .btn-icon { background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; }
+    .btn-icon { background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 50%; width: 44px; height: 44px; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; }
     .btn-dl { background: #3498DB; color: white; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
     .btn-dl:disabled { background: #95A5A6; }
-    .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 2rem; background: rgba(0,0,0,0.3); padding: 10px 15px; cursor: pointer; border-radius: 8px; user-select: none; }
+    .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); color: white; background: rgba(0,0,0,0.3); padding: 15px; cursor: pointer; border-radius: 8px; user-select: none; display: flex; align-items: center; justify-content: center; min-height: 60px; min-width: 44px; }
     .nav-left { left: 10px; }
     .nav-right { right: 10px; }
     @media (max-width: 768px) { .nav-arrow { display: none; } }
 
-    /* ★長押しガイドカードの調整: 横幅を広げ、不自然な改行をなくす */
     #longPressGuide { 
       display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%); 
       background: #F1C40F; color: #333; font-weight: bold; padding: 12px 20px; border-radius: 8px; 
@@ -45,7 +48,6 @@
     @keyframes popup { 0% { top: 50px; opacity: 0; } 100% { top: 70px; opacity: 1; } }
     .notice-banner { display: none; background: #FFF3CD; color: #856404; padding: 12px 15px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px; border: 1px solid #FFEEBA; }
 
-    /* ★追加: 一括保存用の全画面ローディング */
     #fullScreenLoader {
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.85); z-index: 10000;
@@ -56,18 +58,17 @@
       border-top: 5px solid #fff; border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    /* アンケートUI用CSS */
+    
     .survey-q { font-weight: bold; font-size: 0.95rem; margin-top: 25px; margin-bottom: 10px; color: var(--primary); }
     .survey-hint { font-size: 0.8rem; color: #95A5A6; font-weight: normal; margin-left: 5px; }
     
     .rating-group { display: flex; gap: 5px; justify-content: space-between; }
     .rating-label { flex: 1; text-align: center; position: relative; }
     .rating-label input[type="radio"] { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
-    .rating-box { display: block; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px 0; font-size: 1rem; font-weight: bold; color: #7F8C8D; transition: all 0.2s; cursor: pointer; }
+    .rating-box { display: block; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px 0; font-size: 1rem; font-weight: bold; color: #7F8C8D; transition: all 0.2s; cursor: pointer; min-height: 44px; box-sizing: border-box;}
     .rating-label input[type="radio"]:checked ~ .rating-box { background: #EAF2F8; border-color: var(--accent); color: var(--accent); }
     .rating-desc { display: flex; justify-content: space-between; font-size: 0.75rem; color: #95A5A6; margin-top: 4px; padding: 0 5px; }
 
-    /* スライダー用CSS */
     .slider-container { margin: 20px 10px 10px 10px; }
     .survey-slider { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #E2E8F0; outline: none; margin-bottom: 15px; }
     .survey-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 30px; height: 30px; border-radius: 50%; background: #1ABC9C; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 3px solid #fff; }
@@ -75,7 +76,7 @@
     .slider-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #7F8C8D; padding: 0 5px; }
     
     .sns-group { display: flex; flex-direction: column; gap: 8px; }
-    .sns-label { display: flex; align-items: center; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px; font-size: 0.95rem; font-weight: bold; color: #333; cursor: pointer; transition: 0.2s; }
+    .sns-label { display: flex; align-items: center; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px; font-size: 0.95rem; font-weight: bold; color: #333; cursor: pointer; transition: 0.2s; min-height: 44px; }
     .sns-label input[type="radio"] { margin-right: 10px; transform: scale(1.3); accent-color: var(--accent); }
     .sns-label:has(input[type="radio"]:checked) { background: #EAF2F8; border-color: var(--accent); }
     
@@ -93,7 +94,7 @@
     <p style="font-size:0.9rem; color:#666;">LINEでお送りした4桁のパスコードを入力してください。</p>
     <input type="number" id="passcodeInput" placeholder="----" maxlength="4" pattern="\d*">
     <div id="authError" style="color:var(--error); font-size:0.85rem; margin-bottom:15px;"></div>
-    <button class="btn" id="btnAuth" onclick="verifyPasscode()">アルバムを開く</button>
+    <button class="btn icon-btn" id="btnAuth" onclick="verifyPasscode()"><span class="material-symbols-outlined">lock_open</span>アルバムを開く</button>
   </div>
 
   <div id="galleryView">
@@ -102,18 +103,17 @@
       <h2 style="margin:0;">アルバム</h2>
       <div style="display:flex; gap:15px; align-items:center;">
         <div id="photoCount" style="font-size:0.9rem; color:#666; font-weight:bold;"></div>
-        <button id="btnZipDl" class="btn-sm" style="background:#2ECC71; color:#fff; border:none; padding:8px 12px; border-radius:4px;" onclick="downloadZip()">一括保存</button>
+        <button id="btnZipDl" class="btn-sm icon-btn" style="background:#2ECC71; color:#fff; border:none; border-radius:4px;" onclick="downloadZip()"><span class="material-symbols-outlined">folder_zip</span>一括保存</button>
       </div>
     </div>
     <div id="expirationNotice" class="notice-banner"></div>
     <div id="galleryList" class="gallery-grid"></div>
-    <!-- ★アンケートフォーム -->
+    
     <div id="surveyContainer" class="card" style="display:none; margin-top: 40px; border: 2px solid var(--accent);">
-      <h3 style="margin-top:0; border-bottom:2px solid var(--border); padding-bottom:10px; color:var(--primary);">📝 撮影アンケートのお願い</h3>
+      <h3 style="margin-top:0; border-bottom:2px solid var(--border); padding-bottom:10px; color:var(--primary); display:flex; align-items:center; justify-content:center; gap:6px;"><span class="material-symbols-outlined">edit_document</span>撮影アンケートのお願い</h3>
       <p style="font-size:0.9rem; color:#666; line-height:1.5;">今後のサービス向上のため、ぜひご感想をお聞かせください！（所要時間: 1分）</p>
       
       <form id="surveyForm">
-        <!-- Q1: 楽しかったか -->
         <div class="survey-q">1. 今回の撮影はたのしかったですか？ <span style="color:red">*</span></div>
         <div class="rating-group">
           <label class="rating-label"><input type="radio" name="q1_fun" value="1"><span class="rating-box">1</span></label>
@@ -124,7 +124,6 @@
         </div>
         <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
 
-        <!-- Q2: 写真の仕上がり -->
         <div class="survey-q">2. 写真の仕上がりは満足ですか？ <span style="color:red">*</span></div>
         <div class="rating-group">
           <label class="rating-label"><input type="radio" name="q3_quality" value="1"><span class="rating-box">1</span></label>
@@ -135,10 +134,8 @@
         </div>
         <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
 
-        <!-- Q3: 所要時間（★スライダーに変更） -->
         <div class="survey-q">3. 所要時間は適切な長さでしたか？ <span style="color:red">*</span></div>
         <div class="slider-container">
-          <!-- -2から2までの5段階。初期値は真ん中(0) -->
           <input type="range" id="q2_time_slider" min="-2" max="2" step="1" value="0" class="survey-slider">
           <div class="slider-labels">
             <span>短すぎた</span>
@@ -167,11 +164,10 @@
           <textarea id="q7_condition_text" class="survey-textarea" placeholder="掲載条件をご記入ください（例：子供の顔はスタンプで隠してほしい、横顔ならOK 等）"></textarea>
         </div>
         
-        <button type="button" class="btn" id="btnSubmitSurvey" style="margin-top: 25px;" onclick="submitSurvey()">アンケートを送信する</button>
+        <button type="button" class="btn icon-btn" id="btnSubmitSurvey" style="margin-top: 25px;" onclick="submitSurvey()"><span class="material-symbols-outlined">send</span>アンケートを送信する</button>
       </form>
     </div>
     
-    <!-- 送信完了メッセージ -->
     <div id="surveyThanks">
       ご協力いただきありがとうございました！<br>いただいたご意見は今後の励みとさせていただきます✨
     </div>
@@ -183,19 +179,17 @@
   <div id="previewModal">
     <div class="preview-header">
       <div id="previewCount" style="font-weight:bold; font-size:1.1rem; text-shadow:1px 1px 2px #000;"></div>
-      <div class="btn-icon" onclick="closePreview()">✕</div>
+      <div class="btn-icon" onclick="closePreview()"><span class="material-symbols-outlined">close</span></div>
     </div>
-    <!-- ★絵文字と改行タグを削除した長押しガイド -->
     <div id="longPressGuide">この画像を長押しして「写真に追加」を選んでください</div>
-    <div class="nav-arrow nav-left" onclick="prevImage()">❮</div>
+    <div class="nav-arrow nav-left" onclick="prevImage()"><span class="material-symbols-outlined">chevron_left</span></div>
     <img id="previewImg" src="">
-    <div class="nav-arrow nav-right" onclick="nextImage()">❯</div>
+    <div class="nav-arrow nav-right" onclick="nextImage()"><span class="material-symbols-outlined">chevron_right</span></div>
     <div class="preview-footer">
-      <button id="btnDownload" class="btn-dl" onclick="downloadCurrentPhoto()">カメラロールに保存</button>
+      <button id="btnDownload" class="btn-dl icon-btn" onclick="downloadCurrentPhoto()"><span class="material-symbols-outlined">download</span>カメラロールに保存</button>
     </div>
   </div>
 
-  <!-- ★追加: 全画面ローディング用HTML -->
   <div id="fullScreenLoader">
     <div class="spinner"></div>
     <div style="margin-top:20px; color:#fff; font-weight:bold; text-align:center; line-height:1.6; font-size:1.1rem;">
@@ -239,7 +233,7 @@
       if (!code) return;
       
       document.getElementById('btnAuth').disabled = true;
-      document.getElementById('btnAuth').innerText = '確認中...';
+      document.getElementById('btnAuth').innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span>確認中...';
       document.getElementById('authError').innerText = '';
 
       const res = await callGasApi('verifyGalleryAccess', { token: urlToken, passcode: code });
@@ -258,7 +252,6 @@
             if (!isNaN(d.getTime())) {
               let dateStr = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
               let noticeEl = document.getElementById('expirationNotice');
-              // ★絵文字を削除
               noticeEl.innerHTML = '<strong>写真の保存期限は ' + dateStr + ' です</strong><br>期限を過ぎると自動で削除されてしまいますので、お早めに一括保存または各写真の保存をお願いいたします。';
               noticeEl.style.display = 'block';
             }
@@ -271,7 +264,7 @@
       } else {
         document.getElementById('authError').innerText = res.error ? res.error.message : '認証に失敗しました。';
         document.getElementById('btnAuth').disabled = false;
-        document.getElementById('btnAuth').innerText = 'アルバムを開く';
+        document.getElementById('btnAuth').innerHTML = '<span class="material-symbols-outlined">lock_open</span>アルバムを開く';
       }
     }
 
@@ -316,59 +309,17 @@
       }
     }
 
-    async function submitSurvey() {
-      // ラジオボタンの選択値を取得
-      const q1 = document.querySelector('input[name="q1_fun"]:checked');
-      const q2 = document.querySelector('input[name="q2_time"]:checked');
-      const q3 = document.querySelector('input[name="q3_quality"]:checked');
-      const q7 = document.querySelector('input[name="q7_sns"]:checked');
-      
-      // 必須チェック
-      if (!q1 || !q2 || !q3 || !q7) {
-        alert('5段階評価とSNS掲載の許可については、すべてご回答をお願いいたします。');
-        return;
-      }
-      
-      const payload = {
-        q1_fun: q1.value,
-        q2_time: q2.value,
-        q3_quality: q3.value,
-        q4_favorite_photo: document.getElementById('q4_favorite_photo').value,
-        q5_good_point: document.getElementById('q5_good_point').value,
-        q6_improvement: document.getElementById('q6_improvement').value,
-        q7_sns_permission: q7.value
-      };
-      
-      const btn = document.getElementById('btnSubmitSurvey');
-      btn.innerText = '送信中...';
-      btn.disabled = true;
-      
-      const res = await callGasApi('submitSurvey', { session_token: sessionToken, payload: payload });
-      
-      if (res.success) {
-        document.getElementById('surveyContainer').style.display = 'none';
-        document.getElementById('surveyThanks').style.display = 'block';
-      } else {
-        alert('送信エラー: ' + res.error.message);
-        btn.innerText = 'アンケートを送信する';
-        btn.disabled = false;
-      }
-    }
-
-    // ★追加: 条件付き掲載を選んだ時にテキストボックスを表示・非表示にする関数
     function toggleConditionInput() {
       const isConditional = document.getElementById('sns_conditional').checked;
       document.getElementById('conditionInputWrapper').style.display = isConditional ? 'block' : 'none';
     }
 
-    // アンケート送信関数
     async function submitSurvey() {
       const q1 = document.querySelector('input[name="q1_fun"]:checked');
       const q3 = document.querySelector('input[name="q3_quality"]:checked');
       const q7 = document.querySelector('input[name="q7_sns"]:checked');
-      const q2_time_val = document.getElementById('q2_time_slider').value; // ★スライダーの値を取得
+      const q2_time_val = document.getElementById('q2_time_slider').value; 
       
-      // 必須チェック（q2はスライダーなので必ず値があるため除外）
       if (!q1 || !q3 || !q7) {
         alert('5段階評価とSNS掲載の許可については、すべてご回答をお願いいたします。');
         return;
@@ -386,7 +337,7 @@
       
       const payload = {
         q1_fun: q1.value,
-        q2_time: q2_time_val, // ★取得したスライダーの値をセット
+        q2_time: q2_time_val, 
         q3_quality: q3.value,
         q4_favorite_photo: document.getElementById('q4_favorite_photo').value,
         q5_good_point: document.getElementById('q5_good_point').value,
@@ -395,7 +346,7 @@
       };
       
       const btn = document.getElementById('btnSubmitSurvey');
-      btn.innerText = '送信中...';
+      btn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span>送信中...';
       btn.disabled = true;
       
       const res = await callGasApi('submitSurvey', { session_token: sessionToken, payload: payload });
@@ -405,7 +356,7 @@
         document.getElementById('surveyThanks').style.display = 'block';
       } else {
         alert('送信エラー: ' + res.error.message);
-        btn.innerText = 'アンケートを送信する';
+        btn.innerHTML = '<span class="material-symbols-outlined">send</span>アンケートを送信する';
         btn.disabled = false;
       }
     }
@@ -443,7 +394,7 @@
       let imgEl = document.getElementById('previewImg');
       imgEl.style.opacity = '0.3'; 
       document.getElementById('previewCount').innerText = (currentIndex + 1) + ' / ' + galleryImages.length;
-      document.getElementById('btnDownload').style.display = 'block';
+      document.getElementById('btnDownload').style.display = 'inline-flex';
       document.getElementById('longPressGuide').style.display = 'none';
       
       const res = await callGasApi('getPhotoThumbnailUrl', { session_token: sessionToken, file_id: imgId, size: 'w800' });
@@ -458,14 +409,14 @@
 
     async function downloadCurrentPhoto() {
       const btn = document.getElementById('btnDownload');
-      btn.innerText = '最高画質を準備中...';
+      btn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span>準備中...';
       btn.disabled = true;
 
       let imgObj = galleryImages[currentIndex];
       let imgId = imgObj.id || imgObj.fileId || imgObj.file_id;
       
       const res = await callGasApi('getPhotoDownloadUrl', { session_token: sessionToken, file_id: imgId });
-      btn.innerText = 'カメラロールに保存';
+      btn.innerHTML = '<span class="material-symbols-outlined">download</span>カメラロールに保存';
       btn.disabled = false;
       
       if (res.success && res.data && res.data.download_url) {
@@ -492,7 +443,6 @@
       document.getElementById('longPressGuide').style.display = 'block';
     }
 
-    // ★追加: Base64形式の巨大な文字列を、ブラウザ内でダウンロード可能なファイル(Blob)に変換する関数
     function base64ToBlob(base64Data, contentType) {
       const sliceSize = 1024;
       const byteCharacters = atob(base64Data);
@@ -513,7 +463,6 @@
     }
 
     async function downloadZip() {
-      // 画面全体を覆うローディングを表示
       const loader = document.getElementById('fullScreenLoader');
       loader.style.display = 'flex';
       
@@ -523,8 +472,6 @@
       
       if (res.success && res.data && res.data.download_url) {
         try {
-          // ★変更: iOSなどで巨大なデータURLがそのまま開けない問題を回避するため、
-          // 文字列(Base64)をフロントエンドでファイル形式(Blob)に変換してから保存させる
           const parts = res.data.download_url.split(';base64,');
           const contentType = parts[0].split(':')[1];
           const base64Str = parts[1];
@@ -539,7 +486,6 @@
           a.click();
           document.body.removeChild(a);
           
-          // メモリ解放
           setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         } catch (e) {
           alert('ファイルの保存処理中にエラーが発生しました。');
