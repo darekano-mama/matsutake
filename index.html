@@ -376,10 +376,17 @@
       document.getElementById('modal').style.display = 'flex';
     }
 
+    let isSubmitting = false; // ★追加: 二重送信ブロック用のフラグ
+
     async function executeSubmit() {
+      if (isSubmitting) return; // ★追加: すでに送信中なら何もしない
+      isSubmitting = true;
+      
       const count = parseInt(document.getElementById('appChildCount').value, 10);
       let children = [];
-      for (let i = 1; i <= count; i++) children.push({ name: document.getElementById(`childName_${i}`).value, age: document.getElementById(`childAge_${i}`).value });
+      for (let i = 1; i <= count; i++) {
+        children.push({ name: document.getElementById(`childName_${i}`).value, age: document.getElementById(`childAge_${i}`).value });
+      }
       
       const payload = {
         event_id: currentEvent.event_id, name: document.getElementById('appName').value,
@@ -387,6 +394,7 @@
       };
 
       document.getElementById('btnSubmit').disabled = true;
+      document.getElementById('btnSubmit').innerText = '送信中...'; // ★追加: ボタンの表示を変えて安心させる
       document.getElementById('submitError').innerText = '';
       
       const action = existingApp ? 'updateApplication' : 'submitApply';
@@ -396,10 +404,13 @@
         document.getElementById('modal').style.display = 'none';
         document.getElementById('viewForm').style.display = 'none';
         document.getElementById('viewSuccess').style.display = 'block';
-        document.getElementById('topHeader').style.display = 'flex'; // 維持
+        document.getElementById('topHeader').style.display = 'flex';
+        isSubmitting = false; // ★フラグ解除
       } else {
         document.getElementById('submitError').innerText = res.error.message;
         document.getElementById('btnSubmit').disabled = false;
+        document.getElementById('btnSubmit').innerText = existingApp ? '変更を確定する' : '確定して申し込む';
+        isSubmitting = false; // ★フラグ解除
       }
     }
 
