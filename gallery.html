@@ -106,6 +106,7 @@
       <p style="font-size:0.9rem; color:#666; line-height:1.5;">今後のサービス向上のため、ぜひご感想をお聞かせください！（所要時間: 1分）</p>
       
       <form id="surveyForm">
+        <!-- Q1: 楽しかったか（満足度軸） -->
         <div class="survey-q">1. 今回の撮影はたのしかったですか？ <span style="color:red">*</span></div>
         <div class="rating-group">
           <label class="rating-label"><input type="radio" name="q1_fun" value="1"><span class="rating-box">1</span></label>
@@ -116,18 +117,8 @@
         </div>
         <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
 
-        <div class="survey-q">2. 所要時間は適切な長さでしたか？ <span style="color:red">*</span></div>
-        <div class="rating-group">
-          <label class="rating-label"><input type="radio" name="q2_time" value="1"><span class="rating-box">1</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="2"><span class="rating-box">2</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="3"><span class="rating-box">3</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="4"><span class="rating-box">4</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="5"><span class="rating-box">5</span></label>
-        </div>
-        <!-- ★変更: 時間の感じ方に合わせたラベル -->
-        <div class="rating-desc"><span>短すぎた</span><span>適切</span><span>長すぎた</span></div>
-
-        <div class="survey-q">3. 写真の仕上がりは満足ですか？ <span style="color:red">*</span></div>
+        <!-- Q2: 写真の仕上がり（満足度軸・順番入れ替え） -->
+        <div class="survey-q">2. 写真の仕上がりは満足ですか？ <span style="color:red">*</span></div>
         <div class="rating-group">
           <label class="rating-label"><input type="radio" name="q3_quality" value="1"><span class="rating-box">1</span></label>
           <label class="rating-label"><input type="radio" name="q3_quality" value="2"><span class="rating-box">2</span></label>
@@ -136,6 +127,17 @@
           <label class="rating-label"><input type="radio" name="q3_quality" value="5"><span class="rating-box">5</span></label>
         </div>
         <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
+
+        <!-- Q3: 所要時間（ボリューム軸・メモリとデザイン変更） -->
+        <div class="survey-q">3. 所要時間は適切な長さでしたか？ <span style="color:red">*</span></div>
+        <div class="rating-group">
+          <label class="rating-label"><input type="radio" name="q2_time" value="-2"><span class="rating-box time-box">-2</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="-1"><span class="rating-box time-box">-1</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="0"><span class="rating-box time-box">0</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="+1"><span class="rating-box time-box">+1</span></label>
+          <label class="rating-label"><input type="radio" name="q2_time" value="+2"><span class="rating-box time-box">+2</span></label>
+        </div>
+        <div class="rating-desc"><span>短すぎた</span><span style="font-weight:bold; color:#1ABC9C;">適切</span><span>長すぎた</span></div>
 
         <div class="survey-q">4. 特に気に入った写真があれば教えてください <span class="survey-hint">任意</span></div>
         <textarea id="q4_favorite_photo" class="survey-textarea" placeholder="例: 笑顔のアップの写真、シャボン玉のシーン など"></textarea>
@@ -153,7 +155,6 @@
           <label class="sns-label"><input type="radio" name="q7_sns" value="掲載不可" onchange="toggleConditionInput()"> 掲載不可</label>
         </div>
         
-        <!-- ★追加: 条件付きを選んだ場合のみ表示される入力欄 -->
         <div id="conditionInputWrapper" style="display:none; margin-top: 10px;">
           <textarea id="q7_condition_text" class="survey-textarea" placeholder="掲載条件をご記入ください（例：子供の顔はスタンプで隠してほしい、横顔ならOK 等）"></textarea>
         </div>
