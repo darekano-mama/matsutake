@@ -66,6 +66,13 @@
     .rating-box { display: block; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px 0; font-size: 1rem; font-weight: bold; color: #7F8C8D; transition: all 0.2s; cursor: pointer; }
     .rating-label input[type="radio"]:checked ~ .rating-box { background: #EAF2F8; border-color: var(--accent); color: var(--accent); }
     .rating-desc { display: flex; justify-content: space-between; font-size: 0.75rem; color: #95A5A6; margin-top: 4px; padding: 0 5px; }
+
+    /* スライダー用CSS */
+    .slider-container { margin: 20px 10px 10px 10px; }
+    .survey-slider { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #E2E8F0; outline: none; margin-bottom: 15px; }
+    .survey-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 30px; height: 30px; border-radius: 50%; background: #1ABC9C; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 3px solid #fff; }
+    .survey-slider::-moz-range-thumb { width: 30px; height: 30px; border-radius: 50%; background: #1ABC9C; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 3px solid #fff; }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #7F8C8D; padding: 0 5px; }
     
     .sns-group { display: flex; flex-direction: column; gap: 8px; }
     .sns-label { display: flex; align-items: center; background: #F8F9FA; border: 2px solid var(--border); border-radius: 6px; padding: 12px; font-size: 0.95rem; font-weight: bold; color: #333; cursor: pointer; transition: 0.2s; }
@@ -106,7 +113,7 @@
       <p style="font-size:0.9rem; color:#666; line-height:1.5;">今後のサービス向上のため、ぜひご感想をお聞かせください！（所要時間: 1分）</p>
       
       <form id="surveyForm">
-        <!-- Q1: 楽しかったか（満足度軸） -->
+        <!-- Q1: 楽しかったか -->
         <div class="survey-q">1. 今回の撮影はたのしかったですか？ <span style="color:red">*</span></div>
         <div class="rating-group">
           <label class="rating-label"><input type="radio" name="q1_fun" value="1"><span class="rating-box">1</span></label>
@@ -117,7 +124,7 @@
         </div>
         <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
 
-        <!-- Q2: 写真の仕上がり（満足度軸・順番入れ替え） -->
+        <!-- Q2: 写真の仕上がり -->
         <div class="survey-q">2. 写真の仕上がりは満足ですか？ <span style="color:red">*</span></div>
         <div class="rating-group">
           <label class="rating-label"><input type="radio" name="q3_quality" value="1"><span class="rating-box">1</span></label>
@@ -128,16 +135,17 @@
         </div>
         <div class="rating-desc"><span>不満</span><span>大変満足</span></div>
 
-        <!-- Q3: 所要時間（ボリューム軸・メモリとデザイン変更） -->
+        <!-- Q3: 所要時間（★スライダーに変更） -->
         <div class="survey-q">3. 所要時間は適切な長さでしたか？ <span style="color:red">*</span></div>
-        <div class="rating-group">
-          <label class="rating-label"><input type="radio" name="q2_time" value="-2"><span class="rating-box time-box">-2</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="-1"><span class="rating-box time-box">-1</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="0"><span class="rating-box time-box">0</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="+1"><span class="rating-box time-box">+1</span></label>
-          <label class="rating-label"><input type="radio" name="q2_time" value="+2"><span class="rating-box time-box">+2</span></label>
+        <div class="slider-container">
+          <!-- -2から2までの5段階。初期値は真ん中(0) -->
+          <input type="range" id="q2_time_slider" min="-2" max="2" step="1" value="0" class="survey-slider">
+          <div class="slider-labels">
+            <span>短すぎた</span>
+            <span style="font-weight:bold; color:#1ABC9C;">適切</span>
+            <span>長すぎた</span>
+          </div>
         </div>
-        <div class="rating-desc"><span>短すぎた</span><span style="font-weight:bold; color:#1ABC9C;">適切</span><span>長すぎた</span></div>
 
         <div class="survey-q">4. 特に気に入った写真があれば教えてください <span class="survey-hint">任意</span></div>
         <textarea id="q4_favorite_photo" class="survey-textarea" placeholder="例: 笑顔のアップの写真、シャボン玉のシーン など"></textarea>
@@ -353,19 +361,19 @@
       document.getElementById('conditionInputWrapper').style.display = isConditional ? 'block' : 'none';
     }
 
-    // ★追加: アンケート送信関数（条件分岐のバリデーションを追加）
+    // アンケート送信関数
     async function submitSurvey() {
       const q1 = document.querySelector('input[name="q1_fun"]:checked');
-      const q2 = document.querySelector('input[name="q2_time"]:checked');
       const q3 = document.querySelector('input[name="q3_quality"]:checked');
       const q7 = document.querySelector('input[name="q7_sns"]:checked');
+      const q2_time_val = document.getElementById('q2_time_slider').value; // ★スライダーの値を取得
       
-      if (!q1 || !q2 || !q3 || !q7) {
+      // 必須チェック（q2はスライダーなので必ず値があるため除外）
+      if (!q1 || !q3 || !q7) {
         alert('5段階評価とSNS掲載の許可については、すべてご回答をお願いいたします。');
         return;
       }
       
-      // ★条件付き掲載可を選んだ場合、テキスト入力が必須
       let snsPermissionText = q7.value;
       if (snsPermissionText === '条件付き掲載可') {
         const conditionText = document.getElementById('q7_condition_text').value.trim();
@@ -378,12 +386,12 @@
       
       const payload = {
         q1_fun: q1.value,
-        q2_time: q2.value,
+        q2_time: q2_time_val, // ★取得したスライダーの値をセット
         q3_quality: q3.value,
         q4_favorite_photo: document.getElementById('q4_favorite_photo').value,
         q5_good_point: document.getElementById('q5_good_point').value,
         q6_improvement: document.getElementById('q6_improvement').value,
-        q7_sns_permission: snsPermissionText // まとめたテキストをDBに保存
+        q7_sns_permission: snsPermissionText
       };
       
       const btn = document.getElementById('btnSubmitSurvey');
