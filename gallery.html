@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>写真ギャラリー</title>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  
+  <!-- ZIP作成用ライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <style>
     :root { --primary: #2C3E50; --accent: #3498DB; --bg: #F5F7FA; --text: #333; --border: #BDC3C7; --error: #E74C3C; }
     body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin:0; }
@@ -84,6 +87,17 @@
     .survey-textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: inherit; resize: vertical; min-height: 80px; -webkit-appearance: none; }
     #surveyThanks { display: none; background: #EAF2F8; border: 2px solid var(--accent); color: var(--accent); padding: 20px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 40px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* 一括ダウンロード画質選択モーダル用 */
+    #downloadModal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding: 20px; }
+    .download-modal-content { background:#fff; padding:25px 20px; border-radius:10px; width:100%; max-width:400px; text-align:center; box-sizing:border-box; }
+    .btn-dl-option { width:100%; padding:14px; margin-bottom:12px; font-size:1.05rem; font-weight:bold; border-radius:6px; cursor:pointer; border:none; display:flex; flex-direction:column; align-items:center; gap:4px; box-sizing:border-box; }
+    .btn-dl-option span { font-size: 0.8rem; font-weight: normal; opacity: 0.9; }
+    .btn-dl-sns { background: var(--accent); color: #fff; }
+    .btn-dl-print { background: #2ECC71; color: #fff; }
+    .btn-dl-original { background: #95A5A6; color: #fff; }
+    .btn-dl-cancel { background: transparent; color: var(--text); border: 1px solid var(--border); margin-top: 10px; flex-direction:row; font-size:1rem; }
+    .dl-notice { font-size: 0.8rem; color: #7F8C8D; line-height: 1.5; margin-top: 15px; text-align: left; background: #F8F9FA; padding: 10px; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -195,6 +209,37 @@
     <div class="spinner"></div>
     <div style="margin-top:20px; color:#fff; font-weight:bold; text-align:center; line-height:1.6; font-size:1.1rem;">
       ZIPファイルを作成中...<br>このままお待ちください
+    </div>
+  </div>
+
+  <!-- 画質選択モーダル -->
+  <div id="downloadModal">
+    <div class="download-modal-content">
+      <h3 style="margin-top:0; color:var(--primary); margin-bottom:20px;">保存サイズの選択</h3>
+      
+      <button class="btn-dl-option btn-dl-sns" onclick="executeZipDownload('sns')">
+        スマホ・SNS用
+        <span>(目安: 約1〜3分)</span>
+      </button>
+      
+      <button class="btn-dl-option btn-dl-print" onclick="executeZipDownload('print')">
+        高画質・プリント用
+        <span>(目安: 約3〜5分)</span>
+      </button>
+      
+      <button class="btn-dl-option btn-dl-original" onclick="executeZipDownload('original')">
+        オリジナル最高画質
+        <span>(目安: 約25〜40分)</span>
+      </button>
+      
+      <button class="btn-dl-option btn-dl-cancel icon-btn" onclick="document.getElementById('downloadModal').style.display='none'">
+        キャンセル
+      </button>
+      
+      <div class="dl-notice">
+        ※枚数や通信環境により、時間が前後する場合があります。<br>
+        ※保存中は画面を閉じずにお待ちください。オリジナル画質の保存は、Wi-Fi環境を強く推奨します。
+      </div>
     </div>
   </div>
 
@@ -444,38 +489,51 @@
       document.getElementById('longPressGuide').style.display = 'block';
     }
 
-    async function downloadZip() {
-      const loader = document.getElementById('fullScreenLoader');
-      // ローディング画面のテキスト部分を取得（進捗状況を表示するため）
-      const loaderText = loader.querySelector('div:nth-child(2)');
-      
+    // 画質選択モーダルを開く
+    function downloadZip() {
       if (galleryImages.length === 0) {
         alert('ダウンロードする写真がありません。');
         return;
       }
-      
+      document.getElementById('downloadModal').style.display = 'flex';
+    }
+
+    // 選択された画質でZIP化を実行する
+    async function executeZipDownload(quality) {
+      document.getElementById('downloadModal').style.display = 'none';
+      const loader = document.getElementById('fullScreenLoader');
+      const loaderText = loader.querySelector('div:nth-child(2)');
       loader.style.display = 'flex';
       
       try {
-        // JSZipのインスタンスを作成
         const zip = new JSZip();
         
-        // ★ 1枚ずつ順番に画像を取得してZIPに追加していく（サーバー負荷を抑えるための直列処理）
         for (let i = 0; i < galleryImages.length; i++) {
-          // 進捗状況を画面に表示
           loaderText.innerHTML = `写真を準備中...<br>(${i + 1} / ${galleryImages.length} 枚)`;
           
           let imgObj = galleryImages[i];
           let imgId = imgObj.id || imgObj.fileId || imgObj.file_id;
+          let filename = imgObj.filename || imgObj.name || `photo_${i+1}.jpg`;
           
-          // 既存の「1枚ダウンロード用API」を流用してデータを取得
-          const res = await callGasApi('getPhotoDownloadUrl', { session_token: sessionToken, file_id: imgId });
+          let res;
+          if (quality === 'sns') {
+            res = await callGasApi('getPhotoThumbnailUrl', { session_token: sessionToken, file_id: imgId, size: 'w1600' });
+          } else if (quality === 'print') {
+            res = await callGasApi('getPhotoThumbnailUrl', { session_token: sessionToken, file_id: imgId, size: 'w3000' });
+          } else {
+            res = await callGasApi('getPhotoDownloadUrl', { session_token: sessionToken, file_id: imgId });
+          }
           
-          if (res.success && res.data && res.data.download_url) {
-            const parts = res.data.download_url.split(';base64,');
-            const base64Str = parts[1];
-            // 取得したBase64画像データをZIP内にセット
-            zip.file(res.data.filename || `photo_${i+1}.jpg`, base64Str, {base64: true});
+          if (res.success && res.data) {
+            let base64Str = '';
+            let dataUrl = res.data.data_url || res.data.download_url;
+            if (dataUrl) {
+              const parts = dataUrl.split(';base64,');
+              base64Str = parts[1];
+            }
+            if (base64Str) {
+              zip.file(filename, base64Str, {base64: true});
+            }
           } else {
             console.error('画像取得失敗:', imgId);
           }
@@ -483,11 +541,9 @@
 
         loaderText.innerHTML = `ZIPファイルを圧縮しています...<br>もう少しお待ちください`;
         
-        // ZIPファイルの生成（ブラウザのメモリ上で実行）
         const content = await zip.generateAsync({ type: "blob" });
         const blobUrl = URL.createObjectURL(content);
         
-        // ダウンロード実行
         const a = document.createElement('a');
         a.href = blobUrl;
         a.download = 'photos.zip';
@@ -495,12 +551,10 @@
         a.click();
         document.body.removeChild(a);
         
-        // メモリ解放
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       } catch (e) {
         alert('ファイルの保存処理中にエラーが発生しました。\n通信環境の良い場所で再度お試しください。');
       } finally {
-        // 処理が終わったらローディング画面を隠し、テキストを元に戻す
         loader.style.display = 'none';
         loaderText.innerHTML = `ZIPファイルを作成中...<br>このままお待ちください`; 
       }
