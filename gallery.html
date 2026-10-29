@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>写真ギャラリー</title>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root { --primary: #2C3E50; --accent: #3498DB; --bg: #F5F7FA; --text: #333; --border: #BDC3C7; --error: #E74C3C; }
     body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin:0; }
@@ -443,55 +444,65 @@
       document.getElementById('longPressGuide').style.display = 'block';
     }
 
-    function base64ToBlob(base64Data, contentType) {
-      const sliceSize = 1024;
-      const byteCharacters = atob(base64Data);
-      const bytesLength = byteCharacters.length;
-      const slicesCount = Math.ceil(bytesLength / sliceSize);
-      const byteArrays = new Array(slicesCount);
-
-      for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
-        const begin = sliceIndex * sliceSize;
-        const end = Math.min(begin + sliceSize, bytesLength);
-        const bytes = new Array(end - begin);
-        for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
-          bytes[i] = byteCharacters[offset].charCodeAt(0);
-        }
-        byteArrays[sliceIndex] = new Uint8Array(bytes);
-      }
-      return new Blob(byteArrays, { type: contentType });
-    }
-
     async function downloadZip() {
       const loader = document.getElementById('fullScreenLoader');
+      // ローディング画面のテキスト部分を取得（進捗状況を表示するため）
+      const loaderText = loader.querySelector('div:nth-child(2)');
+      
+      if (galleryImages.length === 0) {
+        alert('ダウンロードする写真がありません。');
+        return;
+      }
+      
       loader.style.display = 'flex';
       
-      const res = await callGasApi('getZipDownloadUrl', { session_token: sessionToken });
-      
-      loader.style.display = 'none';
-      
-      if (res.success && res.data && res.data.download_url) {
-        try {
-          const parts = res.data.download_url.split(';base64,');
-          const contentType = parts[0].split(':')[1];
-          const base64Str = parts[1];
+      try {
+        // JSZipのインスタンスを作成
+        const zip = new JSZip();
+        
+        // ★ 1枚ずつ順番に画像を取得してZIPに追加していく（サーバー負荷を抑えるための直列処理）
+        for (let i = 0; i < galleryImages.length; i++) {
+          // 進捗状況を画面に表示
+          loaderText.innerHTML = `写真を準備中...<br>(${i + 1} / ${galleryImages.length} 枚)`;
           
-          const blob = base64ToBlob(base64Str, contentType);
-          const blobUrl = URL.createObjectURL(blob);
+          let imgObj = galleryImages[i];
+          let imgId = imgObj.id || imgObj.fileId || imgObj.file_id;
           
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = res.data.filename || 'photos.zip';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          // 既存の「1枚ダウンロード用API」を流用してデータを取得
+          const res = await callGasApi('getPhotoDownloadUrl', { session_token: sessionToken, file_id: imgId });
           
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-        } catch (e) {
-          alert('ファイルの保存処理中にエラーが発生しました。');
+          if (res.success && res.data && res.data.download_url) {
+            const parts = res.data.download_url.split(';base64,');
+            const base64Str = parts[1];
+            // 取得したBase64画像データをZIP内にセット
+            zip.file(res.data.filename || `photo_${i+1}.jpg`, base64Str, {base64: true});
+          } else {
+            console.error('画像取得失敗:', imgId);
+          }
         }
-      } else {
-        alert('ZIP作成エラー: ' + res.error.message);
+
+        loaderText.innerHTML = `ZIPファイルを圧縮しています...<br>もう少しお待ちください`;
+        
+        // ZIPファイルの生成（ブラウザのメモリ上で実行）
+        const content = await zip.generateAsync({ type: "blob" });
+        const blobUrl = URL.createObjectURL(content);
+        
+        // ダウンロード実行
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'photos.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // メモリ解放
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } catch (e) {
+        alert('ファイルの保存処理中にエラーが発生しました。\n通信環境の良い場所で再度お試しください。');
+      } finally {
+        // 処理が終わったらローディング画面を隠し、テキストを元に戻す
+        loader.style.display = 'none';
+        loaderText.innerHTML = `ZIPファイルを作成中...<br>このままお待ちください`; 
       }
     }
 
