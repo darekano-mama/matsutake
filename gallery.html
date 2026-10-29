@@ -443,27 +443,7 @@
       document.getElementById('longPressGuide').style.display = 'block';
     }
 
-    // Base64デコード用関数（復活）
-    function base64ToBlob(base64Data, contentType) {
-      const sliceSize = 1024;
-      const byteCharacters = atob(base64Data);
-      const bytesLength = byteCharacters.length;
-      const slicesCount = Math.ceil(bytesLength / sliceSize);
-      const byteArrays = new Array(slicesCount);
-
-      for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
-        const begin = sliceIndex * sliceSize;
-        const end = Math.min(begin + sliceSize, bytesLength);
-        const bytes = new Array(end - begin);
-        for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
-          bytes[i] = byteCharacters[offset].charCodeAt(0);
-        }
-        byteArrays[sliceIndex] = new Uint8Array(bytes);
-      }
-      return new Blob(byteArrays, { type: contentType });
-    }
-
-    // 事前に置かれたZIPをそのまま取得してダウンロードする
+    // 事前に置かれたZIPをGoogle Driveから直接ダウンロードする（最速版）
     async function downloadZip() {
       const loader = document.getElementById('fullScreenLoader');
       loader.style.display = 'flex';
@@ -472,24 +452,15 @@
         const res = await callGasApi('getZipDownloadUrl', { session_token: sessionToken });
         
         if (res.success && res.data && res.data.download_url) {
-          const parts = res.data.download_url.split(';base64,');
-          const contentType = parts[0].split(':')[1];
-          const base64Str = parts[1];
-          
-          const blob = base64ToBlob(base64Str, contentType);
-          const blobUrl = URL.createObjectURL(blob);
-          
+          // Google Driveのダウンロードリンクを別タブで開く
           const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = res.data.filename || 'photos.zip';
+          a.href = res.data.download_url;
+          a.target = '_blank'; // ギャラリーを閉じないように別タブで開く
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         } else {
-          // エラーメッセージ（ZIP_NOT_FOUNDなど）をそのままアラートで出す
-          alert(res.error.message);
+          alert(res.error ? res.error.message : '一括保存用のファイルが見つかりません。');
         }
       } catch (e) {
         alert('通信エラーが発生しました。電波の良いところで再度お試しください。');
